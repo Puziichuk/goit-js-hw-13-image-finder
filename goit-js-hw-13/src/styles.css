@@ -18,3 +18,9 @@ body {
    */
   background-image: url('./images/bg-pattern.png');
 }
+
+.stats {
+  display: flex;
+  width: 640px;
+  justify-content: space-between;
+}
