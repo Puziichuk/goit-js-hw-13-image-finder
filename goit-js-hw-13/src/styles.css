@@ -24,3 +24,7 @@ body {
   width: 640px;
   justify-content: space-between;
 }
+
+.button-more.is-hidden {
+  display: none;
+}
