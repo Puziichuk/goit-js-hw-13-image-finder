@@ -6,12 +6,14 @@ import image from "./templates/image.hbs";
 const refs = {
   input: document.querySelector('#search-form'),
   gallery: document.querySelector(".gallery"),
-  button: document.querySelector(".button"),
+  buttonLoad: document.querySelector(".button-load"),
+  buttonMore: document.querySelector(".button-more"),
   body: document.querySelector("body")
 }
 
 refs.input.addEventListener('submit', searchImages);
-refs.button.addEventListener('click', fetchHits) ;
+
+refs.buttonMore.addEventListener('click', fetchHits) ;
 
 function searchImages(e){
     e.preventDefault();
@@ -25,8 +27,10 @@ function searchImages(e){
 
    fetchHits();
 
-    form.reset() ;
+  form.reset();
+  show();
 }
+
 
 
 
@@ -57,3 +61,9 @@ function renderImageCard(hits){
 
     refs.gallery.insertAdjacentHTML('beforeend', markup)
 }
+
+
+function  show() {
+    refs.buttonMore.classList.remove('is-hidden');
+}
+
