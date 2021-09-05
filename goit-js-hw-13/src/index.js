@@ -1,69 +1,90 @@
 import './styles.css';
-import getData from "./apiService";
-import image from "./templates/image.hbs";
+import cardsImgsTpl from './templates/image.hbs';
+import NewsApiService from './js/apiService';
+import LoadMoreBtn from './js/load-more-btn';
 
+import { info, error } from '@pnotify/core';
+import '@pnotify/core/dist/PNotify.css';
+import '@pnotify/core/dist/BrightTheme.css';
+
+import * as basicLightbox from 'basiclightbox';
+import 'basiclightbox/dist/basicLightbox.min.css';
 
 const refs = {
-  input: document.querySelector('#search-form'),
-  gallery: document.querySelector(".gallery"),
-  buttonLoad: document.querySelector(".button-load"),
-  buttonMore: document.querySelector(".button-more"),
-  body: document.querySelector("body")
+  searchForm: document.querySelector('#search-form'),
+  cardsContainer: document.querySelector('.gallery'),
+};
+const loadMoreBtn = new LoadMoreBtn({
+  selector: '[data-action="load-more"]',
+  hidden: true,
+});
+const newsApiService = new NewsApiService();
+
+refs.searchForm.addEventListener('submit', onSearch);
+loadMoreBtn.refs.button.addEventListener('click', onLoadMore);
+refs.cardsContainer.addEventListener('click', onOpenModal);
+
+function onSearch(e) {
+  e.preventDefault();
+
+  newsApiService.query = e.currentTarget.elements.query.value;
+
+  if (newsApiService.query === '') {
+    return info({
+      text: 'Enter the value!',
+      delay: 1500,
+      closerHover: true,
+    });
+  }
+
+  loadMoreBtn.show();
+  newsApiService.resetPage();
+  clearCardsContainer();
+  fetchCards();
 }
 
-refs.input.addEventListener('submit', searchImages);
-
-refs.buttonMore.addEventListener('click', fetchHits) ;
-
-function searchImages(e){
-    e.preventDefault();
-     const form = e.currentTarget;
-
-    getData.query = form.elements.query.value;
-    
-   getData.resetPage();
-
-   refs.gallery.innerHTML = '' ;
-
-   fetchHits();
-
-  form.reset();
-  show();
+function fetchCards() {
+  loadMoreBtn.disable();
+  return newsApiService.fetchCards().then(images => {
+    appendCardsMarkup(images);
+    loadMoreBtn.enable();
+    if (images.length === 0) {
+      loadMoreBtn.hide();
+      error({
+        text: 'No matches found!',
+        delay: 1500,
+        closerHover: true,
+      });
+    }
+  });
 }
 
+function appendCardsMarkup(images) {
+  refs.cardsContainer.insertAdjacentHTML('beforeend', cardsImgsTpl(images));
+}
 
+function clearCardsContainer() {
+  refs.cardsContainer.innerHTML = '';
+}
 
+function onOpenModal(e) {
+  if (e.target.nodeName !== 'IMG') {
+    return;
+  }
 
-function fetchHits(){
+  const largeImageURL = `<img src= ${e.target.dataset.source}>`;
+  basicLightbox.create(largeImageURL).show();
+}
 
-    getData.fetchApi().then(hits => {
-        renderImageCard(hits);
-
-
-       setTimeout(() => {
-        window.scrollTo({
-            top: document.documentElement.offsetHeight,
-            behavior: 'smooth'
-        })
-           
-       }, 1000);
-
-        }).catch(error=>console.log('sorry, ERROR')).finally(() =>{
-
+function onLoadMore() {
+  fetchCards()
+    .then(
+      setTimeout(() => {
+        window.scrollBy({
+          top: document.documentElement.clientHeight - 100,
+          behavior: 'smooth',
         });
-
+      }, 1000),
+    )
+    .catch(err => console.log(err));
 }
-
-
-
-function renderImageCard(hits){
-    const markup = image(hits);
-
-    refs.gallery.insertAdjacentHTML('beforeend', markup)
-}
-
-
-function  show() {
-    refs.buttonMore.classList.remove('is-hidden');
-}
-
